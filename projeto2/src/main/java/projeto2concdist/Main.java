@@ -1,8 +1,4 @@
 package projeto2concdist;
-
-import projeto2.cliente.Cliente;
-import projeto2.servidor_A.Servidor_A;
-
 public class Main{
 
     //teste servidor a

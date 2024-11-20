@@ -1,4 +1,4 @@
-package projeto2.cliente;
+package projeto2concdist;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,8 +8,6 @@ import java.net.Socket;
 
 public class Cliente {
 
-
-    
      
     public void FazConsulta(String consulta){
        

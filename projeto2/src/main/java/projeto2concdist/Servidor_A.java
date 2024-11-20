@@ -1,4 +1,4 @@
-package projeto2.servidor_A;
+package projeto2concdist;
 
 import java.io.IOException;
 import java.io.PrintWriter;
