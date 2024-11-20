@@ -1,13 +1,15 @@
 package projeto2.servidor_A;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 
+
 public class Servidor_A {
 
-    public static void main(String[] args) {
+    public void iniciarservidor(){
 
         int port = 8080;
 
@@ -18,6 +20,9 @@ public class Servidor_A {
             while (true) { 
                 try (Socket clientSocket = serverSocket.accept()){
                     System.out.println("conexão estabelecida com " + clientSocket.getInetAddress());
+
+                    PrintWriter resposta = new PrintWriter (clientSocket.getOutputStream(),true);
+                    resposta.println(" Teste de conexão bem sucedido");
                 } catch(IOException e){
                     e.printStackTrace();
                 }
@@ -27,6 +32,5 @@ public class Servidor_A {
             e.printStackTrace();
         
     }
-
 }
 }

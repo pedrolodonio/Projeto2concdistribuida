@@ -96,7 +96,7 @@
             </execution>
           </executions>
             <configuration>
-              <mainClass>projeto2concdist.App</mainClass>
+              <mainClass>projeto2concdist.Main</mainClass>
             </configuration>
         </plugin>
         </plugins>

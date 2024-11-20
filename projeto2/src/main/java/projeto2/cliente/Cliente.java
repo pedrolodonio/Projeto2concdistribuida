@@ -9,7 +9,9 @@ import java.net.Socket;
 public class Cliente {
 
 
-    public void FazConsulta (String consulta){
+    
+     
+    public void FazConsulta(String consulta){
        
         try (
         Socket socket = new Socket ("localhost",8080);
