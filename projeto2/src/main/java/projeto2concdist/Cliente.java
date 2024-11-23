@@ -14,15 +14,36 @@ public class Cliente {
         try (
         Socket socket = new Socket ("localhost",8080);
         PrintWriter out = new PrintWriter (socket.getOutputStream(),true);
-        BufferedReader in = new BufferedReader (new InputStreamReader (socket.getInputStream()))
+        BufferedReader in = new BufferedReader (new InputStreamReader (socket.getInputStream()));
+        BufferedReader entradaUsuario = new BufferedReader (new InputStreamReader(System.in))
         ) {
 
-            out.println(consulta);
+            String busca;
 
-            String resposta = in.readLine();
+            while (true) { 
+                System.out.println("Faça sua busca ou digite 'cancelar' para cancelar: ");
+                busca = entradaUsuario.readLine();
+                    if("cancelar".equalsIgnoreCase(busca)){
+                        System.out.println("Encerrando...");
+                        break;
+                    }
+            }
 
-            System.out.println(" "+ resposta);
+            out.println(busca);
+
+            String resultado = in.readLine();
+
+            if (resultado != null){
+                System.out.println("Resultado encontrado: " + resultado);
+            }
+
+            else{
+                System.out.println("resultado não encontrado");
+            }
+
+            
         } catch(IOException e){
+            System.err.println("erro ao estabelecer conexão com o servidor" +e.getMessage());
             e.printStackTrace();
         }
         
