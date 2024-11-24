@@ -8,47 +8,24 @@ import java.net.Socket;
 
 public class Cliente {
 
-     
-    public void FazConsulta(String consulta){
-       
-        try (
-        Socket socket = new Socket ("localhost",8080);
-        PrintWriter out = new PrintWriter (socket.getOutputStream(),true);
-        BufferedReader in = new BufferedReader (new InputStreamReader (socket.getInputStream()));
-        BufferedReader entradaUsuario = new BufferedReader (new InputStreamReader(System.in))
-        ) {
+    private static final String HOST_A = "localhost";
+    private static final int PORTA_A = 8080;
 
-            String busca;
+    public void fazerConsulta(String consulta) {
+        try (Socket socket = new Socket(HOST_A, PORTA_A);
+             PrintWriter saida = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
-            while (true) { 
-                System.out.println("Faça sua busca ou digite 'cancelar' para cancelar: ");
-                busca = entradaUsuario.readLine();
-                    if("cancelar".equalsIgnoreCase(busca)){
-                        System.out.println("Encerrando...");
-                        break;
-                    }
-            }
+            // Envia a consulta
+            saida.println(consulta);
 
-            out.println(busca);
+            // Recebe a resposta
+            String resposta = entrada.readLine();
+            System.out.println("Resposta do servidor: " + resposta);
 
-            String resultado = in.readLine();
-
-            if (resultado != null){
-                System.out.println("Resultado encontrado: " + resultado);
-            }
-
-            else{
-                System.out.println("resultado não encontrado");
-            }
-
-            
-        } catch(IOException e){
-            System.err.println("erro ao estabelecer conexão com o servidor" +e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Erro na comunicação com o Servidor A: " + e.getMessage());
             e.printStackTrace();
         }
-        
-        
-}
-    
-
+    }
 }
