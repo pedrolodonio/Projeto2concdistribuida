@@ -1,65 +1,111 @@
 package projeto2concdist;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class Servidor_A {
 
-    private static final int PORTA_A = 8080; // Porta do Servidor A
-    private static final String HOST_B = "localhost"; // Endereço do Servidor B
-    private static final int PORTA_B = 8081; // Porta do Servidor B
+    private static final int PORT = 8080;
+    private static final int SERVER_B_PORT = 8081;
+    private static final String DATA_PATH = "projeto2/arquivos.json/data_A.json";
 
     public void iniciarServidor() {
-        try (ServerSocket serverSocket = new ServerSocket(PORTA_A)) {
-            System.out.println("Servidor A iniciado na porta " + PORTA_A);
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Servidor A iniciado na porta " + PORT);
 
             while (true) {
                 try (Socket clientSocket = serverSocket.accept()) {
                     System.out.println("Conexão estabelecida com cliente: " + clientSocket.getInetAddress());
 
-                    BufferedReader entradaCliente = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                    PrintWriter respostaCliente = new PrintWriter(clientSocket.getOutputStream(), true);
+                    BufferedReader entrada = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    String busca = entrada.readLine();
+                    System.out.println("Recebida consulta do cliente: " + busca);
 
-                    // Recebe a consulta do cliente
-                    String consulta = entradaCliente.readLine();
-                    System.out.println("Consulta recebida do cliente: " + consulta);
+                    // Busca local no Servidor A
+                    String resultadoLocal = buscaLocal(busca);
 
-                    // Encaminha a consulta para o Servidor B
-                    String respostaServidorB = consultarServidorB(consulta);
+                    // Busca no Servidor B
+                    String resultadoServidorB = consultarServidorB(busca);
 
-                    // Retorna a resposta do Servidor B para o cliente
-                    respostaCliente.println(respostaServidorB);
+                    // Combina resultados
+                    String resultadoFinal = resultadoLocal + "\n" + resultadoServidorB;
+
+                    PrintWriter saida = new PrintWriter(clientSocket.getOutputStream(), true);
+                    saida.println(resultadoFinal);
 
                 } catch (IOException e) {
-                    System.err.println("Erro ao processar cliente: " + e.getMessage());
+                    System.err.println("Erro na conexão com o cliente: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
-
         } catch (IOException e) {
             System.err.println("Erro ao iniciar o Servidor A: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private String consultarServidorB(String consulta) {
-        try (Socket socketB = new Socket(HOST_B, PORTA_B);
-             PrintWriter saidaB = new PrintWriter(socketB.getOutputStream(), true);
-             BufferedReader entradaB = new BufferedReader(new InputStreamReader(socketB.getInputStream()))) {
+    private String buscaLocal(String busca) {
+        List<Artigo> artigos = carregarDados(DATA_PATH);
 
-            // Envia a consulta para o Servidor B
-            saidaB.println(consulta);
+        StringBuilder resultados = new StringBuilder();
+        for (Artigo artigo : artigos) {
+            if (artigo.getTitulo().toLowerCase().contains(busca.toLowerCase()) ||
+                artigo.getIntroducao().toLowerCase().contains(busca.toLowerCase())) {
+                resultados.append(artigo.getTitulo()).append("\n");
+            }
+        }
 
-            // Aguarda e retorna a resposta do Servidor B
-            return entradaB.readLine();
+        return resultados.length() > 0 ? resultados.toString() : "Nenhum artigo encontrado no Servidor A.";
+    }
+
+    private String consultarServidorB(String busca) {
+        try (Socket socket = new Socket("localhost", SERVER_B_PORT);
+             PrintWriter saida = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            // Envia consulta para o Servidor B
+            saida.println(busca);
+
+            // Recebe resposta do Servidor B
+            return entrada.readLine();
 
         } catch (IOException e) {
-            System.err.println("Erro ao se comunicar com o Servidor B: " + e.getMessage());
-            return "Erro ao buscar no Servidor B.";
+            System.err.println("Erro ao consultar o Servidor B: " + e.getMessage());
+            return "Erro ao consultar o Servidor B.";
+        }
+    }
+
+    private List<Artigo> carregarDados(String arquivoJson) {
+        try (FileReader reader = new FileReader(arquivoJson)) {
+            Type listType = new TypeToken<List<Artigo>>() {}.getType();
+            return new Gson().fromJson(reader, listType);
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar arquivo JSON: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private static class Artigo {
+        private String titulo;
+        private String introducao;
+
+        public String getTitulo() {
+            return titulo;
+        }
+
+        public String getIntroducao() {
+            return introducao;
         }
     }
 }
