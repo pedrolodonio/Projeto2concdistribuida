@@ -7,9 +7,18 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+
 public class Servidor_B {
 
     private static final int PORTA_B = 8081; // Porta do Servidor B
+    private JsonNode dados; // Variável para armazenar os dados
+
+    // Construtor que recebe o JsonNode
+    public Servidor_B(JsonNode dados) {
+        this.dados = dados;
+    }
 
     public void iniciarServidor() {
         try (ServerSocket socketServidor = new ServerSocket(PORTA_B)) {
@@ -23,14 +32,21 @@ public class Servidor_B {
                     PrintWriter saida = new PrintWriter(socket.getOutputStream(), true);
 
                     // Recebe a consulta
-                    String busca = entrada.readLine();
-                    System.out.println("Consulta recebida: " + busca);
+                    String consulta = entrada.readLine();
+                    System.out.println("Consulta recebida: " + consulta);
+
+                    // Se a consulta for "sair", fecha o servidor
+                    if (consulta.equalsIgnoreCase("sair")) {
+                        System.out.println("Comando 'sair' recebido. Encerrando o Servidor B.");
+                        break;  // Sai do loop e encerra o servidor
+                    }
 
                     // Realiza a busca nos dados locais
-                    String resultado = buscaLocal(busca);
+                    String resultado = buscaLocal(consulta);
 
                     // Retorna o resultado ao Servidor A
                     saida.println(resultado);
+                    //System.out.println("Resposta enviada do Servidor B ao A: " + resultado);
 
                 } catch (IOException e) {
                     System.err.println("Erro ao processar conexão: " + e.getMessage());
@@ -44,20 +60,31 @@ public class Servidor_B {
         }
     }
 
-    private String buscaLocal(String busca) {
-        String[] baseDados = {
-            "Artigo sobre computação quântica",
-            "Introdução a redes neurais convolucionais",
-            "Estudo sobre aprendizado de máquina supervisionado"
-        };
-
+    private String buscaLocal(String consulta) {
         StringBuilder resultados = new StringBuilder();
-        for (String artigo : baseDados) {
-            if (artigo.toLowerCase().contains(busca.toLowerCase())) {
-                resultados.append(artigo).append(" | ");
+        JsonNode titulos = dados.path("title");
+    
+        // Normaliza a consulta (remove espaços extras)
+        String consultaNormalizada = consulta.toLowerCase().trim();
+    
+        // Itera sobre as chaves numéricas do objeto
+        titulos.fieldNames().forEachRemaining(nomeChave -> {
+            // A chave é o índice numérico como string, e o valor é o título
+            String tituloOriginal = titulos.path(nomeChave).asText(); // Mantém o título original
+            String tituloNormalizado = tituloOriginal.toLowerCase().trim(); // Normaliza o título
+    
+            // Debug: Verificar a consulta e o título
+            // System.out.println("Título Original: '" + tituloOriginal + "'");
+            // System.out.println("Consulta: '" + consultaNormalizada + "'");
+    
+            // Verifica se o título contém o padrão de busca
+            if (tituloNormalizado.contains(consultaNormalizada)) {
+                // Adiciona o índice e o título original
+                resultados.append(nomeChave + ": " + tituloOriginal).append("\n");
             }
-        }
-
-        return resultados.length() > 0 ? resultados.toString() : "Nenhum resultado encontrado no Servidor B";
+        });
+    
+        // Retorna os resultados encontrados ou uma mensagem padrão se nada for encontrado
+        return resultados.length() > 0 ? resultados.toString() : "";
     }
 }
